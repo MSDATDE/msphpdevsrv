@@ -1,0 +1,53 @@
+FROM php:7.3-fpm
+
+# ENV Args
+ARG USER
+ARG USER_GUID
+ARG TIME_ZONE
+ARG TIME_ZONE_PATH
+
+RUN apt-get update && apt-get install -y \
+    git \
+    tzdata\
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
+    zip \
+    unzip \
+    && docker-php-ext-install \
+    pdo_mysql \ 
+    mbstring \
+    opcache \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    intl \
+    zip 
+
+RUN pecl install -o -f redis \
+    &&  rm -rf /tmp/pear \
+    &&  docker-php-ext-enable redis
+
+RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+
+## Install composer globally
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
+    && apt-get clean && rm -rf \
+    /var/lib/apt/lists/* \
+    /tmp/* \
+    /var/tmp/*
+
+RUN mkdir -p /root/setup
+COPY start.sh /root/setup/start.sh
+RUN chmod +x /root/setup/start.sh    
+
+# Create User to run Composer and other php cli scripts like artisan for Laravel
+RUN useradd -G www-data,root --uid=${USER_GUID} -d /home/${USER} ${USER}
+RUN mkdir -p /home/${USER}/.composer && \
+    chown -R ${USER}:${USER} /home/${USER}
+
+# Set working directory
+WORKDIR /var/www

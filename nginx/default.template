@@ -1,0 +1,38 @@
+server {
+    client_max_body_size 1024M;
+
+    listen %NGINX_PORT;
+    server_name %SERVER_NAME;
+    
+    root %DOCUMENT_ROOT;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-XSS-Protection "1; mode=block";
+    add_header X-Content-Type-Options "nosniff";
+
+    index index.php index.html index.htm;
+
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+        gzip_static on;
+    }
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+
+    location ~ \.php$ {
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass %FASTCGI_HOST:%FASTCGI_PORT;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
+        
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}

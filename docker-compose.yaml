@@ -13,8 +13,8 @@ services:
     links:
       - php-fpm
     environment:
-      - TIME_ZONE=Europe\Berlin
-      - TIME_ZONE_PATH=Europe/Berlin
+      - TIME_ZONE=${TIME_ZONE}
+      - TIME_ZONE_PATH=${TIME_ZONE_PATH}
       - SERVER_NAME=localhost
       - NGINX_PORT=80
       - FASTCGI_HOST=php-fpm
@@ -23,14 +23,12 @@ services:
     ports:
       - 80:80
     volumes:
-      # - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      # - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-      - ./:/var/www/
+      - ${APP_VOLUMEN_PATH}:/var/www/
     command: /bin/bash -c "cd /root/setup/; /root/setup/start.sh"
 
   php-fpm:
     container_name: php-fpm
-    restart: always
+    restart: unless-stopped
     env_file: .env
     image: php7.3-fpm:latest
     build:
@@ -41,10 +39,34 @@ services:
     environment:
       - USER=${USER}
       - USER_GUID=${USER_GUID}
-      - TIME_ZONE=Europe\Berlin
-      - TIME_ZONE_PATH=Europe/Berlin
+      - TIME_ZONE=${TIME_ZONE}
+      - TIME_ZONE_PATH=${TIME_ZONE_PATH}
     volumes:
-      - ./:/var/www/
-      # - ./php-fpm/timezone:/etc/timezone:ro
+      - ${APP_VOLUMEN_PATH}:/var/www/
     command: /bin/bash -c "cd /root/setup/; /root/setup/start.sh"
     working_dir: /var/www/
+
+  database:
+    image: mysql:5.7
+    container_name: mysql
+    restart: unless-stopped
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --innodb-flush-log-at-trx-commit=0
+    volumes:
+      - ${MYSQL_DB_PATH}:/var/lib/mysql:cached
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - ${MYSQL_PORT}:3306
+
+  redis:
+    image: msdat/redis:latest
+    container_name: redis
+    build:
+      context: ./redis
+    ports:
+      - ${REDIS_PORT}:6379
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:delegated

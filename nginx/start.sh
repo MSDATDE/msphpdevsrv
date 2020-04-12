@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 #Change Settings in nginx site config
 sed -i 's/%NGINX_PORT/'${NGINX_PORT}'/g' /etc/nginx/conf.d/default.conf
 sed -i 's/%SERVER_NAME/'${SERVER_NAME}'/g' /etc/nginx/conf.d/default.conf

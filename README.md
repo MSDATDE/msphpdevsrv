@@ -1,4 +1,4 @@
-# Development NGNX PHP MYSQL and REDIS Server with Docker
+# Development NGINX PHP MYSQL and REDIS Server with Docker
 
 This is a Development Server Environment created with docker. It contains: PHP-FPM 7.3.16 NGINX MYSQL 5.7 REDIS
 
